@@ -78,7 +78,7 @@ const parseItemPage = async (item) => {
   do {
     successful = await run();
     if (!successful) {
-      delayTime += 2;
+      delayTime *= 2;
       await delay(delayTime);
     }
   } while (!successful);
