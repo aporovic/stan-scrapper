@@ -57,7 +57,7 @@ const parseItemPage = async (item) => {
   item.lokacija = pills.length < 6 ? pills[0] : pills[2];
   item.stanje = pills.length < 6 ? pills[1] : pills[3];
   item.kvadrata = !isNaN(item.kvadrata) ? Number(item.kvadrata) : item.kvadrata;
-  pageProvider.releaseInstance(pageInstance.index);
+  pageProvider.releaseInstance(pageInstance);
   //const numCijena = cijena.replace(/\D/g, "");
   //const normalized = fieldValue.match(/(\d+(,|\.\d+)?)+/)?.[0].replace('.', ',');
 };

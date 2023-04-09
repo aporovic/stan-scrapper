@@ -29,12 +29,13 @@ class PageProvider {
       }
       if (instanceNum < this.instanceLimit) {
         instanceNum++;
-        this.instances.push({
+        const instance = {
           instance: await this.browser.newPage(),
           used: true,
-          index: this.instances.length,
-        });
-        resolve(this.instances[this.instances.length - 1]);
+        };
+        this.instances.push(instance);
+        instance.index = this.instances.length - 1;
+        resolve(instance);
         return;
       }
       const instance = this.instances.find((instance) => !instance.used);
@@ -48,13 +49,13 @@ class PageProvider {
     });
   }
 
-  releaseInstance(index) {
+  releaseInstance(instance) {
     instanceNum--;
     const pendingResolveFn = this.pending.pop();
     if (pendingResolveFn) {
-      pendingResolveFn(this.instances[index]);
+      pendingResolveFn(instance);
     } else {
-      this.instances[index].used = false;
+      instance.used = false;
     }
   }
 }
