@@ -79,6 +79,9 @@ const parseItemPage = async (item) => {
     successful = await run();
     if (!successful) {
       delayTime *= 2;
+      console.log(
+        `Instance ${pageInstance.index} item ${item.id} delayed for ${delayTime}ms`
+      );
       await delay(delayTime);
     }
   } while (!successful);
