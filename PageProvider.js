@@ -1,4 +1,5 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require("puppeteer");
+const chromium = require("chromium");
 
 let instanceNum = 0;
 class PageProvider {
@@ -11,7 +12,13 @@ class PageProvider {
 
   async getBrowser() {
     if (!this.browserPromise) {
-      this.browserPromise = puppeteer.launch();
+      this.browserPromise =
+        process.env.USE_LOCAL_CHROMIUM == "true"
+          ? puppeteer.launch({
+              headless: true,
+              executablePath: chromium.path,
+            })
+          : puppeteer.launch();
     }
     return this.browserPromise;
   }
@@ -23,11 +30,15 @@ class PageProvider {
       }
       if (instanceNum < this.instanceLimit) {
         instanceNum++;
-        this.instances.push({ instance: await this.browser.newPage(), used: true, index: this.instances.length });
+        this.instances.push({
+          instance: await this.browser.newPage(),
+          used: true,
+          index: this.instances.length,
+        });
         resolve(this.instances[this.instances.length - 1]);
         return;
       }
-      const instance = this.instances.find(instance => !instance.used);
+      const instance = this.instances.find((instance) => !instance.used);
       if (instance) {
         instance.used = true;
         resolve(instance);
@@ -36,9 +47,6 @@ class PageProvider {
         this.pending.push(resolve);
       }
     });
-
-
-
   }
 
   releaseInstance(index) {
