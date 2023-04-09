@@ -65,13 +65,12 @@ const parseItemPage = async (item) => {
 const loadPage = async () => {
   try {
     let url = firstPage;
-    const browser =
-      process.env.USE_LOCAL_CHROMIUM == "true"
-        ? puppeteer.launch({
-            headless: true,
-            executablePath: chromium.path,
-          })
-        : puppeteer.launch();
+    const browser = await (process.env.USE_LOCAL_CHROMIUM == "true"
+      ? puppeteer.launch({
+          headless: true,
+          executablePath: chromium.path,
+        })
+      : puppeteer.launch());
     const page = await browser.newPage();
     while (url) {
       const start = new Date();

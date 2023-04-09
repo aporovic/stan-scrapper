@@ -12,13 +12,12 @@ class PageProvider {
 
   async getBrowser() {
     if (!this.browserPromise) {
-      this.browserPromise =
-        process.env.USE_LOCAL_CHROMIUM == "true"
-          ? puppeteer.launch({
-              headless: true,
-              executablePath: chromium.path,
-            })
-          : puppeteer.launch();
+      this.browserPromise = await (process.env.USE_LOCAL_CHROMIUM == "true"
+        ? puppeteer.launch({
+            headless: true,
+            executablePath: chromium.path,
+          })
+        : puppeteer.launch());
     }
     return this.browserPromise;
   }
