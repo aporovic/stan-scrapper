@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 
-import { collectData } from "./scrapperService";
+const scrapperService = require("./scrapperService");
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -9,7 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 // Get a full listing
 app.get("/data", async () => {
   try {
-    const items = await collectData();
+    const items = await scrapperService.collectData();
     res.json(items).end();
   } catch (e) {
     console.error(e);

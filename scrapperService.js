@@ -122,10 +122,12 @@ const loadPage = async () => {
   }
 };
 
-export async function collectData() {
+async function collectData() {
   const start = new Date();
   var items = await loadPage();
   console.log(items.length);
   console.log((new Date() - start) / 1000 / 60);
   return items;
 }
+
+module.exports = { collectData };
