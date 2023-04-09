@@ -27,7 +27,10 @@ class PageProvider {
       if (!this.browser) {
         this.browser = await this.getBrowser();
       }
-      if (instanceNum < this.instanceLimit) {
+      if (
+        instanceNum < this.instanceLimit &&
+        this.instances.length < this.instanceLimit
+      ) {
         instanceNum++;
         const instance = {
           instance: await this.browser.newPage(),

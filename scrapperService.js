@@ -78,7 +78,6 @@ const loadPage = async () => {
 
       const items = await page.$$(".articles > div a");
       let parsedItems = [];
-      console.log(`Items count: ${items.length}`);
       await Promise.all(
         items.map(async (item, index) => {
           const itemUrl = await (await item.getProperty("href")).jsonValue();
@@ -102,11 +101,6 @@ const loadPage = async () => {
           cijena = !isNaN(cijena) ? Number(cijena) : cijena;
 
           parsedItems.push({ id, naslov, cijena, url: itemUrl });
-          console.log(
-            "Load page:",
-            index,
-            ((new Date() - start) / 1000).toFixed(2)
-          );
           return;
         })
       );
@@ -117,6 +111,7 @@ const loadPage = async () => {
       const pageNumIndex = url.lastIndexOf("=") + 1;
       const pageNum = parseInt(url.substring(pageNumIndex));
       url = `${url.substring(0, pageNumIndex)}${pageNum + 1}`;
+      console.log(`Next page: ${pageNum + 1}`);
       if (items.length === 0) {
         break;
       }
