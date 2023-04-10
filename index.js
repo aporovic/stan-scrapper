@@ -7,7 +7,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Get a full listing
-app.get("/data", async () => {
+app.get("/data", async (req, res) => {
   try {
     const items = await scrapperService.collectData();
     res.json(items).end();

@@ -1,8 +1,12 @@
 const camelCase = require("lodash/camelCase");
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-extra");
 const chromium = require("chromium");
 
 const PageProvider = require("./PageProvider");
+const ResourceManager = require("./resource-menager");
+
+const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+puppeteer.use(StealthPlugin());
 
 const firstPage =
   "https://olx.ba/pretraga?attr=102%280-65%29&category_id=23&price_to=170000&canton=9&cities=&listing_type=sell&page=1";
@@ -42,66 +46,43 @@ const getText = async (el) => {
 
 const parseItemPage = async (item) => {
   const pageInstance = await pageProvider.getInstance();
-  let delayTime = 1000;
 
-  const run = async () => {
-    try {
-      await pageInstance.instance.goto(item.url);
+  await pageInstance.instance.goto(item.url, {
+    waitUntil: "networkidle0",
+    timeout: 0,
+  });
+  await page.waitForSelector(".section-title");
 
-      await Promise.all(
-        webFieldsNames.map(async (fieldLabel) => {
-          const value = await getField(pageInstance.instance, fieldLabel);
-          const prop = propName(fieldLabel);
-          item[prop] = value;
-        })
-      );
-      const pills = await Promise.all(
-        (await pageInstance.instance.$$(".btn-pill")).map(getText)
-      );
-      item.lokacija = pills.length < 6 ? pills[0] : pills[2];
-      item.stanje = pills.length < 6 ? pills[1] : pills[3];
-      item.kvadrata = !isNaN(item.kvadrata)
-        ? Number(item.kvadrata)
-        : item.kvadrata;
-      pageProvider.releaseInstance(pageInstance);
-      //const numCijena = cijena.replace(/\D/g, "");
-      //const normalized = fieldValue.match(/(\d+(,|\.\d+)?)+/)?.[0].replace('.', ',');
-      return true;
-    } catch (e) {
-      if (!e.message.includes("Navigation timeout")) {
-        throw e;
-      }
-      return false;
-    }
-  };
-  let successful = false;
-  do {
-    successful = await run();
-    if (!successful) {
-      delayTime *= 2;
-      console.log(
-        `Instance ${pageInstance.index} item ${item.id} delayed for ${delayTime}ms`
-      );
-      await delay(delayTime);
-    }
-  } while (!successful);
+  await Promise.all(
+    webFieldsNames.map(async (fieldLabel) => {
+      const value = await getField(pageInstance.instance, fieldLabel);
+      const prop = propName(fieldLabel);
+      item[prop] = value;
+    })
+  );
+  const pills = await Promise.all(
+    (await pageInstance.instance.$$(".btn-pill")).map(getText)
+  );
+  item.lokacija = pills.length < 6 ? pills[0] : pills[2];
+  item.stanje = pills.length < 6 ? pills[1] : pills[3];
+  item.kvadrata = !isNaN(item.kvadrata) ? Number(item.kvadrata) : item.kvadrata;
+  pageProvider.releaseInstance(pageInstance);
+  //const numCijena = cijena.replace(/\D/g, "");
+  //const normalized = fieldValue.match(/(\d+(,|\.\d+)?)+/)?.[0].replace('.', ',');
 };
 
-const loadPage = async () => {
+const loadPage = async (resourceManager) => {
   try {
     let url = firstPage;
-    const browser = await (process.env.USE_LOCAL_CHROMIUM == "true"
-      ? puppeteer.launch({
-          headless: true,
-          executablePath: chromium.path,
-        })
-      : puppeteer.launch());
-    const page = await browser.newPage();
+    const page = await resourceManager.createPage();
+
     while (url) {
       const start = new Date();
-      await page.goto(url);
+      await page.goto(url, { waitUntil: "networkidle0", timeout: 0 });
+      await page.waitForSelector(".articles");
 
       const items = await page.$$(".articles > div a");
+      let source = await page.content();
       let parsedItems = [];
       await Promise.all(
         items.map(async (item, index) => {
@@ -150,7 +131,9 @@ const loadPage = async () => {
 
 async function collectData() {
   const start = new Date();
-  var items = await loadPage();
+  var resourceManager = new ResourceManager(true);
+  await resourceManager.init();
+  var items = await loadPage(resourceManager);
   console.log(items.length);
   console.log((new Date() - start) / 1000 / 60);
   return items;

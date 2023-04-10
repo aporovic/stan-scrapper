@@ -1,5 +1,10 @@
-const puppeteer = require("puppeteer");
+const puppeteer = require("puppeteer-extra");
 const chromium = require("chromium");
+
+const ResourceManager = require("./resource-menager");
+
+const StealthPlugin = require("puppeteer-extra-plugin-stealth");
+puppeteer.use(StealthPlugin());
 
 let instanceNum = 0;
 class PageProvider {
@@ -8,16 +13,12 @@ class PageProvider {
     this.instances = [];
     this.pending = [];
     this.browserPromise = null;
+    this.resourceManager = new ResourceManager(true);
   }
 
   async getBrowser() {
     if (!this.browserPromise) {
-      this.browserPromise = await (process.env.USE_LOCAL_CHROMIUM == "true"
-        ? puppeteer.launch({
-            headless: true,
-            executablePath: chromium.path,
-          })
-        : puppeteer.launch());
+      this.browserPromise = this.resourceManager.init();
     }
     return this.browserPromise;
   }
@@ -33,7 +34,7 @@ class PageProvider {
       ) {
         instanceNum++;
         const instance = {
-          instance: await this.browser.newPage(),
+          instance: await this.resourceManager.createPage(),
           used: true,
         };
         this.instances.push(instance);
