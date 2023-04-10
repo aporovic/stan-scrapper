@@ -47,29 +47,54 @@ const getText = async (el) => {
 const parseItemPage = async (item, index) => {
   const pageInstance = await pageProvider.getInstance();
 
-  await pageInstance.instance.goto(item.url, {
-    waitUntil: "networkidle0",
-    timeout: 60000,
-  });
-  await pageInstance.instance.waitForSelector(".section-title");
+  let delayTime = 1000;
 
-  await Promise.all(
-    webFieldsNames.map(async (fieldLabel) => {
-      const value = await getField(pageInstance.instance, fieldLabel);
-      const prop = propName(fieldLabel);
-      item[prop] = value;
-    })
-  );
-  const pills = await Promise.all(
-    (await pageInstance.instance.$$(".btn-pill")).map(getText)
-  );
-  item.lokacija = pills.length < 6 ? pills[0] : pills[2];
-  item.stanje = pills.length < 6 ? pills[1] : pills[3];
-  item.kvadrata = !isNaN(item.kvadrata) ? Number(item.kvadrata) : item.kvadrata;
-  pageProvider.releaseInstance(pageInstance);
-  console.log(`Item ${index + 1} to fetched`);
-  //const numCijena = cijena.replace(/\D/g, "");
-  //const normalized = fieldValue.match(/(\d+(,|\.\d+)?)+/)?.[0].replace('.', ',');
+  const run = async () => {
+    try {
+      await pageInstance.instance.goto(item.url, {
+        waitUntil: "networkidle0",
+        timeout: 60000,
+      });
+      await pageInstance.instance.waitForSelector(".section-title");
+
+      await Promise.all(
+        webFieldsNames.map(async (fieldLabel) => {
+          const value = await getField(pageInstance.instance, fieldLabel);
+          const prop = propName(fieldLabel);
+          item[prop] = value;
+        })
+      );
+      const pills = await Promise.all(
+        (await pageInstance.instance.$$(".btn-pill")).map(getText)
+      );
+      item.lokacija = pills.length < 6 ? pills[0] : pills[2];
+      item.stanje = pills.length < 6 ? pills[1] : pills[3];
+      item.kvadrata = !isNaN(item.kvadrata)
+        ? Number(item.kvadrata)
+        : item.kvadrata;
+      pageProvider.releaseInstance(pageInstance);
+      //const numCijena = cijena.replace(/\D/g, "");
+      //const normalized = fieldValue.match(/(\d+(,|\.\d+)?)+/)?.[0].replace('.', ',');
+      console.log(`Item ${index + 1} fetched`);
+      return true;
+    } catch (e) {
+      if (!e.message.includes("Navigation timeout")) {
+        throw e;
+      }
+      return false;
+    }
+  };
+  let successful = false;
+  do {
+    successful = await run();
+    if (!successful) {
+      delayTime *= 2;
+      console.log(
+        `Instance ${pageInstance.index} item ${item.id} delayed for ${delayTime}ms`
+      );
+      await delay(delayTime);
+    }
+  } while (!successful);
 };
 
 const loadPage = async (resourceManager) => {
