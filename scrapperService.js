@@ -44,14 +44,14 @@ const getText = async (el) => {
   return el && (await (await el.getProperty("textContent")).jsonValue()).trim();
 };
 
-const parseItemPage = async (item) => {
+const parseItemPage = async (item, index) => {
   const pageInstance = await pageProvider.getInstance();
 
   await pageInstance.instance.goto(item.url, {
     waitUntil: "networkidle0",
     timeout: 60000,
   });
-  await page.waitForSelector(".section-title");
+  await pageInstance.instance.waitForSelector(".section-title");
 
   await Promise.all(
     webFieldsNames.map(async (fieldLabel) => {
@@ -67,6 +67,7 @@ const parseItemPage = async (item) => {
   item.stanje = pills.length < 6 ? pills[1] : pills[3];
   item.kvadrata = !isNaN(item.kvadrata) ? Number(item.kvadrata) : item.kvadrata;
   pageProvider.releaseInstance(pageInstance);
+  console.log(`Item ${index + 1} to fetched`);
   //const numCijena = cijena.replace(/\D/g, "");
   //const normalized = fieldValue.match(/(\d+(,|\.\d+)?)+/)?.[0].replace('.', ',');
 };
@@ -82,7 +83,7 @@ const loadPage = async (resourceManager) => {
       await page.waitForSelector(".articles");
 
       const items = await page.$$(".articles > div a");
-      let source = await page.content();
+      // let source = await page.content();
       let parsedItems = [];
       await Promise.all(
         items.map(async (item, index) => {
@@ -111,7 +112,8 @@ const loadPage = async (resourceManager) => {
         })
       );
 
-      await Promise.all(parsedItems.map((item) => parseItemPage(item)));
+      console.log(`Items to fetch ${parsedItems.length}`);
+      await Promise.all(parsedItems.map(parseItemPage));
       stanovi = stanovi.concat(parsedItems);
 
       const pageNumIndex = url.lastIndexOf("=") + 1;
