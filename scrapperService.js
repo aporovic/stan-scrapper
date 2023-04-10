@@ -49,7 +49,7 @@ const parseItemPage = async (item) => {
 
   await pageInstance.instance.goto(item.url, {
     waitUntil: "networkidle0",
-    timeout: 0,
+    timeout: 60000,
   });
   await page.waitForSelector(".section-title");
 
@@ -78,7 +78,7 @@ const loadPage = async (resourceManager) => {
 
     while (url) {
       const start = new Date();
-      await page.goto(url, { waitUntil: "networkidle0", timeout: 0 });
+      await page.goto(url, { waitUntil: "networkidle0", timeout: 60000 });
       await page.waitForSelector(".articles");
 
       const items = await page.$$(".articles > div a");
